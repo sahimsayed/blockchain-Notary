@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blockchain Notary UI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-bottom: 1rem;
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    button {
+      margin-right: 10px;
+    }
+    #result {
+      margin-top: 1rem;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📝 Blockchain Notary Service</h1>
+
+  <label for="document">Paste text or upload a .txt file:</label><br>
+  <textarea id="document"></textarea><br>
+  <input type="file" id="fileInput" accept=".txt"><br>
+
+  <button onclick="notarize()">✅ Notarize</button>
+  <button onclick="verify()">🔍 Verify</button>
+
+  <div id="result"></div>
+
+  <script>
+    // Load text file into textarea
+    document.getElementById("fileInput").addEventListener("change", function() {
+      const file = this.files[0];
+      if (file && file.type === "text/plain") {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById("document").value = e.target.result;
+        };
+        reader.readAsText(file);
+      } else {
+        alert("Please upload a .txt file.");
+      }
+    });
+
+    async function notarize() {
+      const content = document.getElementById("document").value;
+      if (!content.trim()) {
+        alert("Please enter or upload document content.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("content", content);
+
+      const res = await fetch("/submit", { method: "POST", body: formData });
+      const data = await res.json();
+
+      document.getElementById("result").innerText =
+        "✅ Notarized!\nHash: " + data.document_hash + "\nBlock Index: " + data.block_index;
+    }
+
+    async function verify() {
+      const content = document.getElementById("document").value;
+      if (!content.trim()) {
+        alert("Please enter or upload document content.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("content", content);
+
+      const res = await fetch("/verify", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (data.verified) {
+        document.getElementById("result").innerText =
+          "✔️ Verified!\nBlock Index: " + data.block_index;
+      } else {
+        document.getElementById("result").innerText =
+          "❌ Not Found in Blockchain.";
+      }
+    }
+  </script>
+
+</body>
+</html>
